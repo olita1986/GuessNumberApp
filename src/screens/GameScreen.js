@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { View, Text, StyleSheet, Button, Alert } from 'react-native'
+import { View, Text, StyleSheet, Button, Alert, ScrollView, FlatList } from 'react-native'
 import NumberContainer from '../components/NumberContainer';
 import Card from '../components/Card';
+import BodyText from '../components/BodyText';
 
 const generateRandomBetween = (min, max, exlude) => {
     min = Math.ceil(min);
@@ -17,16 +18,16 @@ const generateRandomBetween = (min, max, exlude) => {
 }
 
 const GameScreen = props => {
-
-    const [currentGuess, setCurrentGuess] = useState(generateRandomBetween(1, 100, props.selectedNumber))
-    const [rounds, setRounds] = useState(0)
+    const initialGuess = generateRandomBetween(1, 100, props.selectedNumber)
+    const [currentGuess, setCurrentGuess] = useState(initialGuess)
+    const [rounds, setRounds] = useState([initialGuess.toString()])
     const currentMin = useRef(1)
     const currentMax = useRef(100)
     const {selectedNumber, onGameOver} = props
 
     useEffect(() => {
         if (currentGuess === props.selectedNumber) {
-            props.onGameOver(rounds)
+            props.onGameOver(rounds.length)
         }
     }, [currentGuess, selectedNumber, onGameOver])
 
@@ -42,12 +43,12 @@ const GameScreen = props => {
         if (direction === 'lower') {
             currentMax.current = currentGuess
         } else {
-            currentMin.current = currentGuess
+            currentMin.current = currentGuess + 1
         }
 
         const nextNumber = generateRandomBetween(currentMin.current,currentMax.current, currentGuess)
         setCurrentGuess(nextNumber)
-        setRounds(currentRounds => currentRounds + 1)
+        setRounds(currentRounds => [nextNumber.toString(), ...currentRounds])
     }
 
     return (
@@ -58,6 +59,38 @@ const GameScreen = props => {
                 <Button title="Lower" onPress={() => nextGuessHandler('lower')}/>
                 <Button title="Higher" onPress={() => nextGuessHandler('higher')}/>
             </Card>
+            <View style={styles.listContainer}>
+                {/* <ScrollView contentContainerStyle={styles.list}>
+                    {rounds.map( (round, index) => (
+                                <View style={styles.listItem} key={round}>
+                                    <BodyText>
+                                        #{rounds.length - index}
+                                    </BodyText>
+                                    <BodyText>
+                                        {round}
+                                    </BodyText>
+                                </View>
+                            )
+                        )
+                    }
+                </ScrollView> */}
+                <FlatList
+                    contentContainerStyle={styles.list}
+                    data={rounds}
+                    keyExtractor={item => item}
+                    renderItem={({item, index}) => {
+                            return (<View style={styles.listItem}>
+                                <BodyText>
+                                    #{rounds.length - index}
+                                </BodyText>
+                                <BodyText>
+                                    {item}
+                                </BodyText>
+                            </View>)
+                        }
+                    }
+                />
+            </View>
         </View>
     )
 }
@@ -74,6 +107,25 @@ const styles = StyleSheet.create({
         marginTop: 20,
         width: 300,
         maxWidth: '80%'
+    },
+    listContainer: {
+        flex: 1,
+        width: '80%'
+    },
+    list: {
+        flexGrow: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-end'
+    },
+    listItem: {
+        borderColor: '#ccc',
+        borderWidth: 1,
+        padding: 15,
+        marginVertical: 10,
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '60%'
     }
 })
 
